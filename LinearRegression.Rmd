@@ -1650,7 +1650,7 @@ Expand each element below to learn more.
 </div>
 
 <br />
-
+## Brandon Notes
 
 
 #### The Mathematical Model <a href="javascript:showhide('mathmodel1')" style="font-size:.6em;color:skyblue;">(Expand)</a>
@@ -1770,15 +1770,15 @@ Click open the "Code" buttom below to the right to find code that runs a simulat
 set.seed(101) #Allows us to always get the same "random" sample
               #Change to a new number to get a new sample
 
-  n <- 3 #set the sample size
+  n <- 10 #set the sample size
 
-  X_i <- runif(n, 15, 45) #Gives n random values from a uniform distribution between 15 to 45.
+  X_i <- runif(n, 0, 200) #Gives n random values from a uniform distribution between 15 to 45.
 
-  beta0 <- 3 #Our choice for the y-intercept. 
+  beta0 <- 15 #Our choice for the y-intercept. 
 
   beta1 <- .1 #Our choice for the slope. 
 
-  sigma <- 12.5 #Our choice for the std. deviation of the error terms.
+  sigma <- 20 #Our choice for the std. deviation of the error terms.
 
   epsilon_i <- rnorm(n, 0, sigma) #Gives n random values from a normal distribution with mean = 0, st. dev. = sigma.
 
@@ -1786,7 +1786,7 @@ set.seed(101) #Allows us to always get the same "random" sample
 
   fabData <- data.frame(y=Y_i, x=X_i) #Store the data as data
 
-  View(fabData) 
+  #View(fabData) 
   
   #In the real world, we begin with data (like fabData) and try to recover the model that (we assume) was used to created it.
 
