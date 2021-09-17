@@ -23,29 +23,44 @@ library(stringr)
 library(dplyr)
 library(netstat)
 library(janitor)
+library(rJava)
+col_names <-c("Time","Temp","Weather","Wind","Humidity","Barometer","Visibility","day","year","Wind_mph")
+data <- data.frame(matrix(ncol = 10, nrow = 0))
+colnames(data)<- col_names
+
 driver <- rsDriver(browser="chrome", port=free_port(), chromever ="93.0.4577.63")
 client <- driver[["client"]]
-client$navigate("https://www.timeanddate.com/weather/@5605242/historic?month=9&year=2020")
-client$findElement(using = "link text","Sep 1")$clickElement()
-source <- client$getPageSource()[[1]]
-dat <- read_html(source) %>%
-   html_node(xpath = '//*[@id="wt-his"]') %>%
-   html_table
-
-# Data Wrangling
-dat <- row_to_names(dat, 1)
-dat <- dat[-c(2, 6)]
-dat <- dat %>% 
-  mutate(day = 1,
-         year = 2020,
-         Time = sub(" .*", "", Time),
-         Temp = sub("°.*", "", Temp),
-         Wind_mph = case_when(
-           Wind == "No wind" ~ "0",
-           TRUE ~ sub(" .*", "", Wind)
-         ),
-         Humidity)
-
+for (y in 2011:2020){
+  for (i in 1: 30){
+    client$navigate(paste0("https://www.timeanddate.com/weather/@5605242/historic?month=9&year=", as.character(y)))
+    client$findElement(using = "link text",paste0("Sep ",as.character(i)))$clickElement()
+    source <- client$getPageSource()[[1]]
+    dat <- read_html(source) %>%
+       html_node(xpath = '//*[@id="wt-his"]') %>%
+       html_table
+    
+    # Data Wrangling
+    dat <- row_to_names(dat, 1)
+    dat <- dat[-c(2, 6)]
+    dat2 <- dat %>% 
+      mutate(day = i,
+             year = y,
+             Time = sub(" .*", "", Time),
+             Temp = sub("°.*", "", Temp),
+             Wind_mph = case_when(
+               Wind == "No wind" ~ "0",
+               TRUE ~ sub(" .*", "", Wind)
+             ),
+             Humidity = sub("%.*", "", Humidity),
+             Barometer = sub(" .*", "", Barometer),
+             Visibility = sub("m.*", "", Visibility)) %>% 
+      head(-1)
+    
+    data <- rbind(data, dat2)
+  
+  }
+}
+write.csv(data,"C:/Users/brand/Documents/Statistics-Notebook/Data/rexburg_weather_dat.csv", row.names = FALSE)
 ```
 
 ## Including Plots
