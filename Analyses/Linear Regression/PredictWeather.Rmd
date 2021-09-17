@@ -24,43 +24,83 @@ library(dplyr)
 library(netstat)
 library(janitor)
 library(rJava)
-col_names <-c("Time","Temp","Weather","Wind","Humidity","Barometer","Visibility","day","year","Wind_mph")
-data <- data.frame(matrix(ncol = 10, nrow = 0))
-colnames(data)<- col_names
 
-driver <- rsDriver(browser="chrome", port=free_port(), chromever ="93.0.4577.63")
-client <- driver[["client"]]
-for (y in 2011:2020){
-  for (i in 1: 30){
-    client$navigate(paste0("https://www.timeanddate.com/weather/@5605242/historic?month=9&year=", as.character(y)))
-    client$findElement(using = "link text",paste0("Sep ",as.character(i)))$clickElement()
-    source <- client$getPageSource()[[1]]
-    dat <- read_html(source) %>%
-       html_node(xpath = '//*[@id="wt-his"]') %>%
-       html_table
-    
-    # Data Wrangling
-    dat <- row_to_names(dat, 1)
-    dat <- dat[-c(2, 6)]
-    dat2 <- dat %>% 
-      mutate(day = i,
-             year = y,
-             Time = sub(" .*", "", Time),
-             Temp = sub("°.*", "", Temp),
-             Wind_mph = case_when(
-               Wind == "No wind" ~ "0",
-               TRUE ~ sub(" .*", "", Wind)
-             ),
-             Humidity = sub("%.*", "", Humidity),
-             Barometer = sub(" .*", "", Barometer),
-             Visibility = sub("m.*", "", Visibility)) %>% 
-      head(-1)
-    
-    data <- rbind(data, dat2)
+### SCRAPING DATA ###
+# col_names <-c("Time","Temp","Weather","Wind","Humidity","Barometer","Visibility","day","year","Wind_mph")
+# data <- data.frame(matrix(ncol = 10, nrow = 0))
+# colnames(data)<- col_names
+# 
+# driver <- rsDriver(browser="chrome", port=free_port(), chromever ="93.0.4577.63")
+# client <- driver[["client"]]
+# for (y in 2011:2020){
+#   for (i in 1: 30){
+#     client$navigate(paste0("https://www.timeanddate.com/weather/@5605242/historic?month=9&year=", as.character(y)))
+#     client$findElement(using = "link text",paste0("Sep ",as.character(i)))$clickElement()
+#     source <- client$getPageSource()[[1]]
+#     dat <- read_html(source) %>%
+#        html_node(xpath = '//*[@id="wt-his"]') %>%
+#        html_table
+#     
+#     # Data Wrangling
+#     dat <- row_to_names(dat, 1)
+#     dat <- dat[-c(2, 6)]
+#     dat2 <- dat %>% 
+#       mutate(day = i,
+#              year = y,
+#              Time = sub(" .*", "", Time),
+#              Temp = sub("°.*", "", Temp),
+#              Wind_mph = case_when(
+#                Wind == "No wind" ~ "0",
+#                TRUE ~ sub(" .*", "", Wind)
+#              ),
+#              Humidity = sub("%.*", "", Humidity),
+#              Barometer = sub(" .*", "", Barometer),
+#              Visibility = sub("m.*", "", Visibility)) %>% 
+#       head(-1)
+#     
+#     data <- rbind(data, dat2)
+#   
+#   }
+# }
+```
+
+```{r}
+dat <- read_csv("C:/Users/britchi3/Documents/Statistics-Notebook/Data/rexburg_weather_dat.csv") %>% 
+  select(-c(Wind))
+
+# Creating a key table to shift relationship days back 3 days
+key_table <- dat %>% count(year, day) %>% 
+  mutate(key = seq(1,300)) %>% 
+  select(-n)
+key_table
+
+dat2 <- dat  %>% 
+  rename(Pressure = Barometer) %>%  
+  group_by(year, day) %>% 
+  summarise(HighTemp = max(Temp),
+            AvgTemp = mean(Temp),
+            AvgPressure = mean(Pressure),
+            AvgHumidity = mean(Humidity)) %>% 
+  ungroup() %>% 
+  inner_join(key_table, by = c("year", "day")) %>% 
+  mutate(Two_prev_key = key - 2)
+dat2
+# Columns with prefix Two are values two days prior
+Two_day_table <-  dat2 %>%
+  rename(TwoHighTemp = HighTemp,
+         TwoAvgTemp = AvgTemp,
+         TwoAvgPressure = AvgPressure,
+         TwoAvgHumidity = AvgHumidity) %>% 
+  select(-key) %>% 
+  rename(key = Two_prev_key)
+Two_day_table
+dat3 <- dat2 %>% 
+  left_join(Two_day_table, by = "key") %>% 
+  select(-c(year.y, day.y, Two_prev_key, key, AvgTemp, AvgPressure, AvgHumidity)) %>% 
+  rename(Year = year.x,
+         Day = day.x) %>% 
+  filter(Day == 20)
   
-  }
-}
-write.csv(data,"C:/Users/brand/Documents/Statistics-Notebook/Data/rexburg_weather_dat.csv", row.names = FALSE)
 ```
 
 ## Including Plots
