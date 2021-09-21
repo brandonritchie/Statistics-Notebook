@@ -1,0 +1,15 @@
+---
+title: "Residuals Explanation"
+author: "Brandon Ritchie"
+date: "9/20/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r}
+library(tidyverse)
+read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/laptops.csv")
+```
+

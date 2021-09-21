@@ -1,21 +1,19 @@
 ---
 title: "Predict the Weather"
 author: "Brandon Ritchie"
-date: "9/16/2021"
-output: html_document
+date: "9/18/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
+```{r, message = FALSE, include = FALSE}
+# Loading Packages
 library(tidyverse)
 library(rvest)
 library(RSelenium)
@@ -24,51 +22,202 @@ library(dplyr)
 library(netstat)
 library(janitor)
 library(rJava)
-col_names <-c("Time","Temp","Weather","Wind","Humidity","Barometer","Visibility","day","year","Wind_mph")
-data <- data.frame(matrix(ncol = 10, nrow = 0))
-colnames(data)<- col_names
+library(pander)
+library(DT)
+```
 
-driver <- rsDriver(browser="chrome", port=free_port(), chromever ="93.0.4577.63")
-client <- driver[["client"]]
-for (y in 2011:2020){
-  for (i in 1: 30){
-    client$navigate(paste0("https://www.timeanddate.com/weather/@5605242/historic?month=9&year=", as.character(y)))
-    client$findElement(using = "link text",paste0("Sep ",as.character(i)))$clickElement()
-    source <- client$getPageSource()[[1]]
-    dat <- read_html(source) %>%
-       html_node(xpath = '//*[@id="wt-his"]') %>%
-       html_table
-    
-    # Data Wrangling
-    dat <- row_to_names(dat, 1)
-    dat <- dat[-c(2, 6)]
-    dat2 <- dat %>% 
-      mutate(day = i,
-             year = y,
-             Time = sub(" .*", "", Time),
-             Temp = sub("°.*", "", Temp),
-             Wind_mph = case_when(
-               Wind == "No wind" ~ "0",
-               TRUE ~ sub(" .*", "", Wind)
-             ),
-             Humidity = sub("%.*", "", Humidity),
-             Barometer = sub(" .*", "", Barometer),
-             Visibility = sub("m.*", "", Visibility)) %>% 
-      head(-1)
-    
-    data <- rbind(data, dat2)
-  
-  }
+```{r, include = FALSE}
+# Reading in and Wrangling Data
+dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/rexburgWeather.csv") %>% 
+  select(-c(Wind))
+
+# Creating a key table to shift relationship Days back 3 Days
+key_table <- dat %>% 
+  count(Year, Day) %>% 
+  mutate(twokey = paste0(as.character(Day - 2), "(", Year, ")"),
+         key = paste0(Day, "(",Year,")")) %>% 
+  select(-n)
+key_table
+
+dat2 <- dat  %>% 
+  rename(Pressure = Barometer) %>% 
+  mutate(groupFactor = paste0(Day, "(",Year,")")) %>% 
+  group_by(groupFactor) %>% 
+  summarise(HighTemp = max(Temp),
+            AvgTemp = mean(Temp),
+            AvgPressure = mean(Pressure),
+            AvgHumidity = mean(Humidity)) %>% 
+  ungroup() %>% 
+  rename(key = groupFactor) %>% 
+  inner_join(key_table, by = "key")
+dat2 %>% arrange(Year)
+# Columns with prefix Two are values two Days prior
+
+threeAve <- dat2 %>% 
+  filter(Day != 20) %>% 
+  group_by(Year) %>% 
+  summarise(threeAveHigh = mean(HighTemp),
+            threeAveTemp = mean(AvgTemp),
+            threeAvePress = mean(AvgPressure),
+            threeAveHum = mean(AvgHumidity))
+
+fin_dat <- dat2 %>% 
+  filter(Day == 20) %>% 
+  rename(HighTempTarget = HighTemp) %>% 
+  select(HighTempTarget, Year) %>% 
+  inner_join(threeAve, by = "Year")
+```
+
+```{r, include = FALSE}
+# Rescaling Values and Performing Regression on each Variable
+fin_dat2<- fin_dat %>% 
+  mutate(AveHighRescale = ((threeAveHigh - min(threeAveHigh))/(max(threeAveHigh) - min(threeAveHigh)))*10,
+         AveTempRescale = ((threeAveTemp - min(threeAveTemp))/(max(threeAveTemp) - min(threeAveTemp)))*10,
+         AvePressRescale = ((threeAvePress - min(threeAvePress))/(max(threeAvePress) - min(threeAvePress)))*10,
+         AveHumRescale = ((threeAveHum - min(threeAveHum))/(max(threeAveHum) - min(threeAveHum)))*10) %>% 
+  select(-c(threeAveHigh, threeAveTemp, threeAvePress, threeAveHum))
+
+# Find Correlations
+HighLM <- lm(HighTempTarget ~ AveHighRescale, data = fin_dat2)
+summaryHigh <- summary(HighLM)
+p1 <- plot(HighTempTarget ~ AveHighRescale, data = fin_dat2)
+
+TempLM <- lm(HighTempTarget ~ AveTempRescale, data = fin_dat2)
+summaryTemp <- summary(TempLM)
+p2 <- plot(HighTempTarget ~ AveTempRescale, data = fin_dat2)
+
+PressLM <- lm(HighTempTarget ~ AvePressRescale, data = fin_dat2)
+summaryPress <- summary(PressLM)
+p3 <- plot(HighTempTarget ~ AvePressRescale, data = fin_dat2)
+
+HumLM <- lm(HighTempTarget ~ AveHumRescale, data = fin_dat2)
+summaryHum <- summary(HumLM)
+p4 <- plot(HighTempTarget ~ AveHumRescale, data = fin_dat2)
+```
+```{r, include = FALSE}
+# Creating Predictor Variable
+regression_data <- fin_dat2 %>% 
+  mutate(predictor = (((1/summary(HighLM)$coefficients[,4][2])*AveHighRescale) + ((1/summary(TempLM)$coefficients[,4][2])*AveTempRescale)+((1/summary(PressLM)$coefficients[,4][2])*AvePressRescale)+((1/summary(HumLM)$coefficients[,4][2])*AveHumRescale))/4) %>% 
+  select(HighTempTarget, predictor)
+
+mainLM <- lm(HighTempTarget ~ predictor, data = regression_data)
+summary(mainLM)
+
+plot <- regression_data %>% 
+  ggplot(aes(x = predictor, y = HighTempTarget))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)
+```
+
+```{r, message = FALSE}
+# Adding equation and R^2 to line
+lm_eq <- function(df){
+
+    m <- lm(HighTempTarget ~ predictor, df)
+    eq <- substitute(y == a + b (x)*","~~r^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 4),
+              b = format(unname(coef(m)[2]), digits = 4),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+
+    as.character(as.expression(eq))
+
 }
-write.csv(data,"C:/Users/brand/Documents/Statistics-Notebook/Data/rexburg_weather_dat.csv", row.names = FALSE)
+
+plot <- plot +
+  geom_text(x = 12, y = 60, label = lm_eq(regression_data), parse = TRUE)
 ```
 
-## Including Plots
+```{r, message = FALSE}
+# Making Prediction
 
-You can also embed plots, for example:
+High <- ((77.3 - 59.333)/(86 - 59.333))*10
+Temp <- ((60.39 - 50.14361)/(67.89855 - 50.14361))*10
+Press <- ((29.92268 - 29.81341)/(30.10472 - 29.81341))*10
+Hum <- ((0.39172 - 0.41636)/(0.7004216 - 0.41636))*10
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+pred <- (((1/summary(HighLM)$coefficients[,4][2])*High) + ((1/summary(TempLM)$coefficients[,4][2])*Temp)+((1/summary(PressLM)$coefficients[,4][2])*Press)+((1/summary(HumLM)$coefficients[,4][2])*Hum))/4
+
+value <- predict(mainLM, data.frame(predictor = pred))
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## What will the High Temperature be on September 20, 2021?
+
+On September 20, 2021 I predict that the high temperature will be $70.03$ degrees.
+
+Here is the linear model I created to predict the high temperature based a scaled predictor variable passed through a function that is weighted off of several variables based on their correlation.
+
+```{r, message = FALSE}
+plot +
+  theme_bw()+
+  labs(x = "Predictor Variable",
+       y = "High Temperature")
+```
+
+
+I will explain:
+
+## Technical Summary
+
+### Creating the Predictor Variable
+Because there are many nuances associated with predicting weather a single variable would not suffice in order to predict the high temperature on Monday. As a result I created a variable based off of the the average high temperature, temperature, pressure, and humidity over the course of the course of September 16-18 from the years 2011-2020. Each of these values were normalized using the function below:
+
+![](C:/Users/brand/Documents/Statistics-Notebook/Analyses/Linear Regression/img1.jpg)
+
+X is the variable, X_min is the smallest value in the feature, X_range is the difference between the minimum and the maximum value in the set, and n is the maximum value being scaled to. 
+
+Once the values were re-scaled a weighted mean was performed with the weights being a fraction of 1 over the p-value of the linear model p-value of the re-scaled variable. The formula looks as follows with A, B, C... being the feature variables:
+
+![](C:/Users/brand/Documents/Statistics-Notebook/Analyses/Linear Regression/img2.jpg)
+
+By plugging in the three day numbers on the day prior, I then got the predictor variable that could then be passed through the regression model.
+
+In this case our predictor variable was 10.27.
+
+### Analysis Details
+
+The following was the output of the linear regression as well as the model:
+
+$$
+  \underbrace{Y_i}_\text{Distance} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Speed} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
+$$
+
+```{r}
+pander(summary(mainLM))
+```
+
+The estimated regression is as follows:
+
+$$
+  \underbrace{\hat{Y}_i}_\text{High Temperature} = 55.85 + 1.382 \underbrace{X_i}_\text{Predictor Variable}
+$$
+
+The hypothesis test is as follows:
+
+$$
+  H_0: \beta_1 = 0
+$$
+
+$$
+  H_a: \beta_1 \neq 0
+$$
+
+As we can see, the relationship is not significantly strong (p = 0.1428), however there does seem to be a slight positive correlation. The meaningfulness is questionable.
+
+Assuming that this is an appropriate model, as the predictor variable increases by one unit, the average high temperature will increase by 1.38 degrees Fahrenheit. Because the predictor variable is unlikely to have a value of 0 because the values weighted are unlikely to reach 0, the p-value for b0 is not particularly helpful. 
+
+### Validation of the Model
+
+After checking the appropriateness of the model, there appears to be a couple of major concerns. First, there are some major outliers with points 5, 9, and 10. This makes the spread on the residuals vs fitted plots not uniform. It is also questionable if the data could be considered normal, because the outliers fall outside of the bounds of the qq-plot.
+
+```{r, message = FALSE}
+par(mfrow=c(1,3))
+plot(mainLM, which = 1:2)
+plot(mainLM$residuals)
+```
+
+## Conclusion
+
+While we can make an educated guess based off of the model for predicting the weather, the results can be considered questionable because of the lack of significance and concerns related to normality and constant variance. 
+
+
