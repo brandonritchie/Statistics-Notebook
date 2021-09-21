@@ -35,8 +35,7 @@ dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/rexburgWeathe
 key_table <- dat %>% 
   count(Year, Day) %>% 
   mutate(twokey = paste0(as.character(Day - 2), "(", Year, ")"),
-         key = paste0(Day, "(",Year,")")) %>% 
-  select(-n)
+         key = paste0(Day, "(",Year,")")) %>% select(-n)
 key_table
 
 dat2 <- dat  %>% 
@@ -138,7 +137,6 @@ Hum <- ((0.39172 - 0.41636)/(0.7004216 - 0.41636))*10
 pred <- (((1/summary(HighLM)$coefficients[,4][2])*High) + ((1/summary(TempLM)$coefficients[,4][2])*Temp)+((1/summary(PressLM)$coefficients[,4][2])*Press)+((1/summary(HumLM)$coefficients[,4][2])*Hum))/4
 
 value <- predict(mainLM, data.frame(predictor = pred))
-
 ```
 
 ## What will the High Temperature be on September 20, 2021?
