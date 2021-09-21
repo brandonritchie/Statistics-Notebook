@@ -8,8 +8,28 @@ output:
     code_folding: hide
 ---
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 library(tidyverse)
-read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/laptops.csv")
+# Home
+#read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/laptops.csv")
+# Campus
+data <- read_csv("C:/Users/britchi3/Documents/Statistics-Notebook/Data/laptops.csv")
+```
+# Big Picture
+We have all been presented with two columns of quantitative data whether in Excel, R, Python, etc and made a scatterplot and fit a regression line to it. However, because of the simplicity of a acouple of lines of code or selecting a button, it may be easy to overlook how that predicted line was created. By analyzing the concept of residuals we can begin to understand how this predicted line represents the predicted average y value per unit change of x.
+
+## Residual
+
+A residual is the y distance of a given observation or dot from the fitted line. The definition for a given point is $r_i = Y_i - \hat{Y}_i$ with $Y_i$ representing the Y position of the data and $\hat{Y}_i$ representing the Y position of the fitted line.
+
+```{r, message = FALSE, warning = FALSE}
+line <- function(x){
+  2*x+3
+}
+
+p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x))+ 
+  stat_function(fun = line) + xlim(-5,5)+
+  geom_point(data = data.frame(x = 0, y = 0), aes(x,y), size = 2)
+p
 ```
 
