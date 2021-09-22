@@ -11,11 +11,10 @@ output:
 ```{r, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(grid)
-library(pBrackets)
 # Home
-read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/laptops.csv")
+#read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/laptops.csv")
 # Campus
-#data <- read_csv("C:/Users/britchi3/Documents/Statistics-Notebook/Data/laptops.csv")
+data <- read_csv("C:/Users/britchi3/Documents/Statistics-Notebook/Data/laptops.csv")
 ```
 # Big Picture
 We have all been presented with two columns of quantitative data whether in Excel, R, Python, etc and made a scatterplot and fit a regression line to it. However, because of the simplicity of a a couple of lines of code or selecting a button, it may be easy to overlook how that predicted line was created. By analyzing the concept of residuals we can begin to understand how this predicted line represents the predicted average y value per unit change of x.
@@ -24,17 +23,41 @@ We have all been presented with two columns of quantitative data whether in Exce
 
 A residual is the y distance of a given observation or dot from the fitted line. The definition for a given point is $r_i = Y_i - \hat{Y}_i$ with $Y_i$ representing the Y position of the data and $\hat{Y}_i$ representing the Y position of the fitted line.
 
+A a negative residual, or a data point that is underneath the fitted line, represents an underestimation for a given data point. On the other hand, a positive residual represents an overestimation for the given data point.
+
 ```{r, message = FALSE, warning = FALSE}
 line <- function(x){
   2*x+3
 }
 
+arb_points <- data.frame(x = c(-5, -4.3, -4.1,-3, -2.5, -1, -1.1, -1.4, -0.6, 1, 1.4, 1.25),
+           y = c(-5,-5.4, -4.6,-3.5,-2,-1,1.5,2.4,1.8,3.2,4.6,5.4))
+
 p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x))+
-  geom_line(data = data.frame(x_val = c(0,0), y_val = c(3,0)), aes(x = x_val, y = y_val), group = 1)+ 
-  geom_point(data = data.frame(x = 0, y = 3), aes(x,y), size = 2)+
-  stat_function(fun = line) + xlim(-5,5)+
+  geom_line(data = data.frame(x_val = c(0,0), y_val = c(3,0)), aes(x = x_val, y = y_val), group = 1)+
+  stat_function(fun = line, linetype = 2) + 
+  xlim(-5,5)+
   geom_point(data = data.frame(x = 0, y = 0), aes(x,y), size = 2)+
-  geom_text(label = "Test", aes(0.6,1))
+  #geom_text(label = "Residual r_i", aes(0.8,1))+
+  geom_text(label = "Fitted Line", aes(2.5, 11))+
+  geom_point(data = arb_points, aes(x,y))+
+  labs(x = "Explanatory Variable X_i", y = "Predictor variable Y_i")+
+  theme_bw()
 p
 ```
 
+In this example, our $Y_i$ data point is an underestimate of the predicted average for an item that has an x value of 0. If our predicted line matches that of the true line and we sampled several points with an explanatory value of 0, then the mean of the values should be on the line (y = 2.7).
+
+But how is this predicted line created based on these points? An inuitive response may be to take the absolute value of all residuals and find a line that reduces the mean value of these residuals. We will explain deeper in the following section.
+
+## SSE (Sum of squared error) and MSE (Mean squared error)
+
+What if instead of looking at the residuals in a one dimensional space of distance we look at the distance in the form of an area? This is accomplished by squaring our residual value. We know from geometry that the area of a square is found by squaring one of it's sides.
+
+The following image shows the squared error for our point we analyzed above.
+
+![](C:/Users/britchi3/Documents/Statistics-Notebook/Analyses/Linear Regression/residual.jpg)
+
+If we take each point, find it's squared error, and sum them up we get $SSE$ or sum of squared error. The formula for what we described is $SSE = \sum_{i = 1}^{n}(Y_i - \hat{Y}_i)^2$. 
+
+Compare this 
