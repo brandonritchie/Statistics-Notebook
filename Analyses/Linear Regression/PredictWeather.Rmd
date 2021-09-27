@@ -1,6 +1,5 @@
 ---
 title: "Predict the Weather"
-author: "Brandon Ritchie"
 date: "9/18/2021"
 output: 
   html_document:
@@ -149,7 +148,9 @@ Here is the linear model I created to predict the high temperature based a scale
 plot +
   theme_bw()+
   labs(x = "Predictor Variable",
-       y = "High Temperature")
+       y = "High Temperature")+
+  geom_point(aes(x = 10.27, y=70.03), size = 3, color = "red")+
+  geom_text(label = "70.03 Degrees Predicted \n on Monday", aes(x = 9, y = 72))
 ```
 
 
@@ -177,7 +178,7 @@ In this case our predictor variable was 10.27.
 The following was the output of the linear regression as well as the model:
 
 $$
-  \underbrace{Y_i}_\text{Distance} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Speed} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
+  \underbrace{Y_i}_\text{High Temperature} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Predictor Variable} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
 $$
 
 ```{r}
