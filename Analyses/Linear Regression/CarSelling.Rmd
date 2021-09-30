@@ -1,0 +1,40 @@
+---
+title: "Car Selling Price - Toyota Prius"
+author: "Brandon Ritchie"
+date: "9/20/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+dat <- read_csv("C:/Users/britchi3/Documents/Statistics-Notebook/Data/car_dat.csv") %>% 
+  filter(Year > 2010)
+```
+
+```{r}
+plot_original <- dat %>% 
+  ggplot(aes(Miles, Price))+
+  geom_point()+
+  theme_bw()
+
+dat %>% 
+  ggplot(aes(Miles, log(Price), color = as.factor(Year)))+
+  geom_point()+
+  geom_smooth(method = 'lm', se = FALSE, color = "black")+
+  theme_bw()
+
+my_lm <- lm(log(Price)~Miles, data = dat)
+summary(my_lm)
+par(mfrow = 1:2)
+plot(my_lm, which=1:2)
+plot(my_lm$residuals)
+```
+
