@@ -1,0 +1,60 @@
+---
+title: "Sampling Distribution Un-veiled"
+author: "Brandon Ritchie"
+date: "9/20/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+N <- 10 
+storage <- rep(NA, N)
+storage
+
+for (i in 2:N){
+  storage[i] <- i^2
+  cat("i =", i, " and i^2 =", i^2, " was saved in storage[", i, "]\n")
+}
+
+storage
+```
+
+```{r}
+n <- 10000
+Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
+Yi <- 2.5 + 3*Xi + rnorm(n, 0, 1.2)
+```
+
+```{r}
+storage <- rep(NA, n)
+for (i in 1:n){
+  Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
+  Yi <- 2.5 + 3*Xi + rnorm(n, 0, 1.2)
+  mylm <- lm(Yi ~ Xi)
+  storage[i] <- coef(mylm)[1] #intercept only
+}
+hist(storage)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
