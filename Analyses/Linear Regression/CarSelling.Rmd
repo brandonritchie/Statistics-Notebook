@@ -21,7 +21,7 @@ library(ggpubr)
 library(car)
 library(pander)
 
-dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/car_dat.csv") %>% 
+dat <- read_csv("../../Data/car_dat.csv") %>% 
   filter(Year > 2010)
 
 ```
