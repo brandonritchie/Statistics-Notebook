@@ -1,0 +1,119 @@
+---
+title: "Car Selling Price - Toyota Prius"
+author: "Brandon Ritchie"
+date: "9/20/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Intro
+
+About two months ago my wife and I got married. With marriage comes a lot of pomp and circumstance, however I realized that there are a lot of costs that are not internalized until getting married. At the top of that list for my wife and I is to buy a car. We have accrued a sizable savings and within a few months we want to pay in cash for a car that will be reliable and last for several years and even have a relatively good salvage value. Due to efficient gas mileage, we have set our sites on a Toyota Prius (I promise I'm not a granola), however how can we know if we are getting a good deal? Also, when would be the optimal mileage to purchase. In this analysis I will try to answer these two questions.
+
+```{r, warning = FALSE, message=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(car)
+library(pander)
+
+dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/car_dat.csv") %>% 
+  filter(Year > 2010)
+
+```
+
+## Data Collection
+
+In order to get a larger sample of data I wrote a web scraping program in Python that scraped Prius listings nationwide. I set the filter for years from 2011 to present because there is increasing variability in prices at ages older than that with similar mileage to their newer counterparts. The program crawled approximately 40 pages and scraped from top to bottom on each page. We will be analyzing 191 listing data points.
+
+## Initial Analysis
+
+We will start by plotting the data in a scatter plot and get a feel for if a linear regression would be an appropriate model.
+
+```{r}
+p <- dat %>% 
+  ggplot(aes(Miles, Price))+
+  geom_point()+
+  labs(title = "Prius Price per Mile")+
+  theme_bw()
+
+p
+```
+
+We can see that there appears to be a linear trend from 0 miles to about 125,000 miles, however we begin to reach an asymptote after that approaches the price of 0. If we fit a linear regression line and view the regression vs fitted plot, we can see that there is a clear lack of linearity 
+
+```{r}
+my_lm <- lm(Price~Miles, data = dat)
+b <- coef(my_lm)
+
+p +
+  stat_function(fun = function(x) (b[1] + b[2] * x))
+
+plot(my_lm, which = 1)
+```
+
+We can see that there predictable curve in the residual vs fitted plot. For newer cars we have a sharper negative slope and for older cars we see a more shallow negative slope. This  implies that newer cars may depreciate in value quicker and cars after a certain mileage depreciate slower because they are reaching salvage value. In order to make this graph to have a more true linear trend, we will need to perform a transformation.
+
+## Transformations
+
+We can get a suggestion for what type of transformation to use by performing a Box Cox transformation.
+
+```{r}
+boxCox(lm(Price~Miles, data = dat))
+```
+
+After performing a Box Cox transformation we can see that 0 lies within the range of $\lambda$. This means we can perform a log transformation (which is preferable because it is the only interpretable transformation). The function for this transformation will look as follows:
+
+$$\underbrace{log(\hat{Y_i})}_\text{Transformed Price} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Prius Mileage} = \hat{Y^\prime}$$
+
+When we perform this transformation, our scatterplot now looks more linear.
+
+```{r}
+log.lm <- lm(log(Price)~Miles, data = dat)
+b.log <- coef(log.lm)
+
+dat %>% 
+  ggplot(aes(Miles, log(Price)))+
+  geom_point()+
+  stat_function(fun = function(x) b.log[1] + b.log[2] * x)+
+  theme_bw()
+```
+
+When we perform a regression we can also see that our results are significant. With a p-value for our slope of <2e-16. We can see the complete output below:
+
+```{r}
+pander(summary(log.lm))
+```
+
+How does this transformed model fit on the original data? We can view this by setting our function equal to $\hat{Y_i}$ by raising each side to $e^x$. The new function looks as follows:
+
+$$
+\hat{Y_i} = e^{\beta_0 + \beta_1X_i}
+$$
+
+This causes our fitted line in the log transformation to be fit to our original data like so:
+
+```{r}
+p+
+  stat_function(fun = function(x) exp(b.log[1] + b.log[2] * x))
+```
+
+# Validating assumptions
+
+We can see by running from our residual vs fitted plot that we see less of a linear trend and more of a dispersion of the data. We can see that there may be a slight curve for cars that have a higher mileage and this may be partially due to less data for cars in the 175,000< mileage. However, it appears that we can assume mostly constant linearity. In our qq-plot we have some heave tails on the left and there appears to be an ambitious soul that is trying to sell their car for about $25,000 while it has a mileage of 110,000. Overall the data appears normal. In the residual vs order plot, the data appears to be independent of the order it was collected.
+
+```{r}
+par(mfrow = c(1,3))
+plot(log.lm, which = 1:2)
+plot(log.lm$residuals)
+
+dat %>% View()
+```
+
+## Conclusion
+
+So, which car should I pick. As we have seen, new cars appear to depreciate quicker than older cars and older cars depreciate at a slower rate. Presumably there is a trade off between initial cost and lifetime investment in repairs. This means that we would want a moderately used vehicle at around 50,000-70,000 miles that is within the price range of two standard deviations below the predicted value. So, for a car at 50,000 miles I would shoot to spend between 14,272.80 on the low end and 19,781.66 on the high end (average value). If we were to sell the vehicle at 150,000 miles (not accounting for inflation) we could expect an average salvage value of 10,312.57 with a net overhead cost after subtracting the salvage value from the initial average price investment of 9,469.09 over the life of the vehicle.

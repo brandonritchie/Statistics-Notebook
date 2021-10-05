@@ -159,15 +159,15 @@ I will explain:
 ## Technical Summary
 
 ### Creating the Predictor Variable
-Because there are many nuances associated with predicting weather a single variable would not suffice in order to predict the high temperature on Monday. As a result I created a variable based off of the the average high temperature, temperature, pressure, and humidity over the course of the course of September 16-18 from the years 2011-2020. Each of these values were normalized using the function below:
+Because there are many nuances associated with predicting weather a single variable would not suffice in order to predict the high temperature on Monday. As a result I created a variable based off of the the average high temperature, temperature, pressure, and humidity over the course of September 16-18 from the years 2011-2020. Each of these values were normalized using the function below:
 
-![](C:/Users/brand/Documents/Statistics-Notebook/Analyses/Linear Regression/img1.jpg)
+$$Y = (\frac{X - X_{min}}{X_{range}})n$$
 
 X is the variable, X_min is the smallest value in the feature, X_range is the difference between the minimum and the maximum value in the set, and n is the maximum value being scaled to. 
 
-Once the values were re-scaled a weighted mean was performed with the weights being a fraction of 1 over the p-value of the linear model p-value of the re-scaled variable. The formula looks as follows with A, B, C... being the feature variables:
+Once the values were re-scaled a weighted mean was performed with the weights being a fraction of 1 over the p-value of the linear model p-value of the re-scaled variable. The formula looks as follows with X being the feature variables, i representing the number of features, and p representing the p-value of the feature:
 
-![](C:/Users/brand/Documents/Statistics-Notebook/Analyses/Linear Regression/img2.jpg)
+$$f(x) = \frac{\sum_{i = 1}^{i}\frac{1}{p_i}x_i}{\sum_{i=1}^{i}1}$$
 
 By plugging in the three day numbers on the day prior, I then got the predictor variable that could then be passed through the regression model.
 
@@ -203,11 +203,11 @@ $$
 
 As we can see, the relationship is not significantly strong (p = 0.1428), however there does seem to be a slight positive correlation. The meaningfulness is questionable.
 
-Assuming that this is an appropriate model, as the predictor variable increases by one unit, the average high temperature will increase by 1.38 degrees Fahrenheit. Because the predictor variable is unlikely to have a value of 0 because the values weighted are unlikely to reach 0, the p-value for b0 is not particularly helpful. 
+Assuming that this is an appropriate model, as the predictor variable increases by one unit, the average high temperature will increase by 1.38 degrees Fahrenheit. Because the predictor variable is unlikely to have a value of 0 because the values weighted are unlikely to reach 0, the p-value for $b_0$ is not particularly helpful. 
 
 ### Validation of the Model
 
-After checking the appropriateness of the model, there appears to be a couple of major concerns. First, there are some major outliers with points 5, 9, and 10. This makes the spread on the residuals vs fitted plots not uniform. It is also questionable if the data could be considered normal, because the outliers fall outside of the bounds of the qq-plot.
+After checking the appropriateness of the model, there appears to be a couple of major concerns. First, from the residual vs fitted we can see that there is large variance. With a sample this small it suggests a lack of linearity in the model. The data is also skewed heavily to the left meaning there is a lack of normality. Also, in our final plot we can see some trending happening implying that our error terms are not independent from their order collected.
 
 ```{r, message = FALSE}
 par(mfrow=c(1,3))
