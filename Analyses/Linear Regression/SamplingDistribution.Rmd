@@ -12,49 +12,154 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+So far in the semester, we have focused on what the equation is for a linear regression, how the regression lines are fit, and how to optimize the fit through transformations however now we can begin to make inferences of what our regression parameters means. We will be able to answer questions such as, what is the probability of witnessing a slope and intercept as extreme or more and what is our confidence interval of our slope and intercept prediction.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Sampling Distribution
 
-```{r cars}
-N <- 10 
-storage <- rep(NA, N)
-storage
+With linear regression, we believe that there is a law that is fixed that describes the correlation between all variables. For instance all 2019 Honda Pilots have some correlation between average speed and gas consumption with an average slope described by $\beta_1$ and an average y-intercept defined by $\beta_0$ with errors normally distributed with a mean of 0 and a variance of $\sigma^2$. This is great and all, but there are very few situations where the law will be known. As a result we must try to make an educated guess that is are close to these true values in order to make a valuable prediction. In this section, I will be talking about sampling distributions and what they can uncover about these true parameters.
 
-for (i in 2:N){
-  storage[i] <- i^2
-  cat("i =", i, " and i^2 =", i^2, " was saved in storage[", i, "]\n")
-}
+### Creating the Law
 
-storage
-```
+We will first start by declaring a law for a regression that describes the variables $X_i$ and $Y_i$. After consulting my magic hat we came up with a slope of $\beta_1 = 6.5$, a y-intercept of $\beta_0 = 8.4$, and a variance of the $\epsilon_i$ of $\sigma^2 = 11$. Now that we have this law declared, we can run a simulation 30 times of this regression and we will evaluate what the mean and standard deviation (residual standard error) of this regression. It is important to note that each regression will be a little bit different because our sample (n = 40) will have a varying amount of error based on the random normal distribution of errors with a variance of $\sigma^2$.
 
-```{r}
-n <- 10000
-Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
-Yi <- 2.5 + 3*Xi + rnorm(n, 0, 1.2)
-```
+### Mean of the Sampled Distributions
 
-```{r}
-storage <- rep(NA, n)
-for (i in 1:n){
+When we run all of the regressions we can create a distribution of the $b_0$ and $b_1$ terms. The distribution of both looks as follows:
+
+```{r, warning = FALSE, message = FALSE}
+n <- 40
+N <- 30
+
+int_vec <- rep(NA, N)
+slope_vec <- rep(NA, N)
+mean_vec <- rep(NA, N)
+
+for(i in 1:N){
   Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
-  Yi <- 2.5 + 3*Xi + rnorm(n, 0, 1.2)
+  Yi <- 8.4 + 6.5*Xi + rnorm(n, 0, 11)
   mylm <- lm(Yi ~ Xi)
-  storage[i] <- coef(mylm)[1] #intercept only
+  coef(mylm)
+  int <- coef(mylm)[1] #intercept only
+  slope <- coef(mylm)[2] #slope only
+  int_vec[i] <- int
+  slope_vec[i] <- slope
 }
-hist(storage)
 
+par(mfrow = 1:2)
+hist(int_vec, main = "Distribution of Y-Intercepts")
+abline(v = mean(int_vec), col = "red")
+hist(slope_vec, main = "Distribution of Slopes")
+abline(v = mean(slope_vec), col = "red")
+```
+We can see that if we run our model 30 times we get a mean y-intercept of $b_0 = 9.39$ and a mean slope of $b_1 = 6.49$ (depending on the random sample that this is rendered in). This is really interesting, because we can see that our mean predicted slope $b_1$ is very close to the actual slope $\beta_1$ and our predicted y-intercept $b_0$ is relatively close to the actual y-intercept of $\beta_2$.
+
+What if we increased the number of replications incrementally and plotted the predicted mean for both graphs?
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(ggpubr)
+n <- 40
+N <- 300
+
+index <- rep(NA, N)
+mean_int <- rep(NA, N)
+mean_slopes <- rep(NA, N)
+for (x in 1:N){
+  int_vec <- rep(NA, x)
+  slope_vec <- rep(NA, x)
+  for(i in 1:x){
+    Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
+    Yi <- 8.4 + 6.5*Xi + rnorm(n, 0, 11)
+    mylm <- lm(Yi ~ Xi)
+    coef(mylm)
+    int <- coef(mylm)[1] #intercept only
+    slope <- coef(mylm)[2] #slope only
+    int_vec[i] <- int
+    slope_vec[i] <- slope
+  }
+  index[x] <- x
+  mean_int[x] <- mean(int_vec)
+  mean_slopes[x] <- mean(slope_vec)
+}
+
+dat <- data_frame(index = index, mean_int = mean_int, mean_slope = mean_slopes)
+
+slope_graph <- dat %>% 
+  ggplot(aes(x = index, y = mean_slope))+
+  geom_line()+
+  labs(x = "Number of Sampling Distributions",
+       y = "Mean Slope", title = "Mean Slope vs Sampling Distribution") +
+  theme_bw()
+
+intercept_graph <- dat %>% 
+  ggplot(aes(x = index, y = mean_int))+
+  geom_line()+
+  labs(x = "Number of Sampling Distributions",
+       y = "Mean Y-Intercept", title = "Mean Y-Intercept vs Sampling Distribution")+
+  theme_bw()
 ```
 
-## Including Plots
+I think that this graph is a pretty powerful representation that truth can be found with the limited data we have through replication. I think that this visualizes the scientific method that as a distribution is tested and tested, the average of those predictions will become less variable as the sampling distribution increases and we will begin to uncover the true parameters.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, warning = FALSE, message = FALSE}
+ggarrange(slope_graph, intercept_graph)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Standard Deviation of the sample distributions
+
+Not only are we able to find a relatively accurate measurement of the true slope and intercept as we increase the number of sampling distributions, but we can also figure out how much the data truly varies. This is represented by $\sigma$ for the true regression line $Y_i$ and the residual standard error for the fitted line $\hat{Y}_i$. The residual standard error is the square root of the MSE which represents the total variance of the squared residuals. By taking the square root, we have effectively a representation of a standard deviation of the regression. This means that if we have a RSE of 11, at a given point (assuming constant variance and the data being normal), 95% of the data will lie plus or minus 22 units of the regression line in the y-direction.
+
+If we create a histogram of standard errors for a sampling distribution of 100, we can see that we get a mean value of 11.1 which is very close to our true $\sigma$ value
+
+```{r, warning = FALSE, message = FALSE}
+n <- 100
+N <- 30
+
+sigma_vec <- rep(NA, N)
+
+for(i in 1:N){
+  Xi <- rep(seq(30, 100, length.out=n/2), each=2) #n must be even.
+  Yi <- 8.4 + 6.5*Xi + rnorm(n, 0, 11)
+  sigma <- summary(lm(Yi ~ Xi))$sigma
+  sigma_vec[i] <- sigma
+}
+
+hist(sigma_vec)
+abline(v = mean(sigma_vec), col = "red")
+```
+
+While residual standard error is a measure of variance within a certain confidence on the y-axis, the standard error is a measure of variance of the data from the regression in the x direction. For the true value of the standard error of $\beta_1$ is explained as:
+
+$$\sigma^2_{b_1} = \frac{\sigma^2}{\sum_{i = 1}^{n}(X_i - \bar{X})^2}$$
+
+For the predicted value of the $b_1$ standard error is expressed as:
+
+$$s^2_{b_1} = \frac{MSE}{\sum_{i=1}^n(X_i - \bar{X})^2}$$
+
+If we recall, MSE or the mean squared errors reflects the average size of the squared residuals. This is divided by the squared x distance from the mean x value. This value describes what one standard deviation of the estimated slope value would be. So, 95% of our slopes should fall $\pm 2*s^2_{b_1}$.
+
+The formula for the predicted value of the standard error of $b_0$ is a little bit different, because the variability of the prediction is based on how far the observed values lie from the null hypotheses of $b_0$. This distance is reflected in the function as follows:
+
+$$s^2_{b_0} = MSE[\frac{1}{n} + \frac{\bar{X}^2}{\sum_{i=1}^n(X_i - \bar{X})^2}]$$
+
+## P-Values
+
+Now that we understand how the standard error is obtained and calculated, we can now explore how they are used to obtain the p-value for the tests. In order to find a p-value we know that we must have a test statistic and a distribution. In our case we can perform find our test statistic with the following function where $b_1$ is our observed slope, $\beta_1$ is our expected slope or what we are testing for our null hypothesis, and $s_{b_1}$ is our standard error:
+
+$$t = \frac{b_1 - \beta_{10}}{s_{b_1}}$$
+
+Essentially we are trying to see how many standard errors separate our observed from our expected slope.
+
+The same function is performed in relation to $b_0$, but remember that the standard error is calculated different.
+
+$$t = \frac{b_0 - \beta_{00}}{s_{b_1}}$$
+
+This t-value is a numeric representation of how many standard deviations our parameters lies from the expected parameter. By using the standard Gaussian distribution we can find the p-value of our parameter or the probability that a parameter as extreme or more extreme than the observed parameter would occur relative to the expected parameter. For example if we had an observed slope with a t-value of 3 with 48 degrees of freedom, then there would be a .43% chance of observing a slope as extreme or more extreme than that slope by random chance.
+
+## Confidence Intervals
+
+Now that we understand how the p-values for a parameter are calculated, we can explain how the confidence intervals for a parameter are determined based on the standard error. 
+
+Lets say that we have a standard error of .05 for our slope. Because we know that the standard error is the standard deviation of the parameter (slope in our case) we can make assumptions about what percentage of slopes from sampled distributions will lie within n number of standard errors of the predicted slope. Because we know 95% of data lies within two standard deviations of the mean we know that for our example 95% of sampled slopes will lie $\pm 0.1$ of our observed slope. 

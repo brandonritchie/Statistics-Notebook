@@ -11,10 +11,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## Intro
-
-About two months ago my wife and I got married. With marriage comes a lot of pomp and circumstance, however I realized that there are a lot of costs that are not internalized until getting married. At the top of that list for my wife and I is to buy a car. We have accrued a sizable savings and within a few months we want to pay in cash for a car that will be reliable and last for several years and even have a relatively good salvage value. Due to efficient gas mileage, we have set our sites on a Toyota Prius (I promise I'm not a granola), however how can we know if we are getting a good deal? Also, when would be the optimal mileage to purchase. In this analysis I will try to answer these two questions.
-
 ```{r, warning = FALSE, message=FALSE}
 library(tidyverse)
 library(ggpubr)
@@ -25,6 +21,30 @@ dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/car_dat.csv")
   filter(Year > 2010)
 
 ```
+
+## Intro
+
+About two months ago my wife and I got married. With marriage comes a lot of pomp and circumstance, however I realized that there are a lot of costs that are not internalized until getting married. At the top of that list for my wife and I is to buy a car. We have accrued a sizable savings and within a few months we want to pay in cash for a car that will be reliable and last for several years and even have a relatively good salvage value. Due to efficient gas mileage, we have set our sites on a Toyota Prius. I will show where we plan on purchasing the car and where we plan on selling it:
+
+```{r}
+log.lm <- lm(log(Price)~Miles, data = dat)
+b.log <- coef(log.lm)
+
+p <- dat %>% 
+  ggplot(aes(Miles, Price))+
+  geom_point()+
+  labs(title = "Prius Price per Mile")+
+  theme_bw()+
+  stat_function(fun = function(x) exp(b.log[1] + b.log[2] * x))+
+  geom_segment(aes(x = 50000, xend = 50000, y = 14272.80, yend = 19781.66), size = 1.5, color = "red")+
+  geom_point(aes(x = 150000, y = 10312.57), size = 3, color = "red")+
+  geom_text(aes(label = "Buy Range", x = 50000, y = 12000))+
+  geom_text(aes(label = "Average expected salvage value", x = 180000, y = 13000))
+
+p
+```
+
+What I learned is that new cars appear to depreciate quicker than older cars and older cars depreciate at a slower rate. Presumably there is a trade off between initial cost and lifetime investment in repairs. This means that we would want a moderately used vehicle at around 50,000-70,000 miles that is within the price range of two standard deviations below the predicted value. So, for a car at 50,000 miles I would shoot to spend between 14,272.80 on the low end and 19,781.66 on the high end (average value). If we were to sell the vehicle at 150,000 miles (not accounting for inflation) we could expect an average salvage value of 10,312.57 with a net overhead cost after subtracting the salvage value from the initial average price investment of 9,469.09 over the life of the vehicle.
 
 ## Data Collection
 
@@ -98,8 +118,16 @@ $$
 This causes our fitted line in the log transformation to be fit to our original data like so:
 
 ```{r}
+pred_t <- predict(log.lm, data.frame(Miles = 50000), interval = "prediction")
+pred_o <- predict(my_lm, data.frame(Miles = 50000), interval = "prediction")
+
 p+
-  stat_function(fun = function(x) exp(b.log[1] + b.log[2] * x))
+  stat_function(fun = function(x) exp(b.log[1] + b.log[2] * x), color = "firebrick")+
+  stat_function(fun = function(x) b[1] + b[2] * x, color = "skyblue")+
+  geom_segment(aes(x = 50000, xend = 50000, y = exp(pred_t[2]), yend = exp(pred_t[3])), size = 4, color = "firebrick", alpha = 0.01)+
+  geom_segment(aes(x = 50000, xend = 50000, y = pred_o[2], yend = pred_o[3]), size = 4, color = "skyblue")
+  
+  
 ```
 
 # Validating assumptions
@@ -113,7 +141,3 @@ plot(log.lm$residuals)
 
 dat %>% View()
 ```
-
-## Conclusion
-
-So, which car should I pick. As we have seen, new cars appear to depreciate quicker than older cars and older cars depreciate at a slower rate. Presumably there is a trade off between initial cost and lifetime investment in repairs. This means that we would want a moderately used vehicle at around 50,000-70,000 miles that is within the price range of two standard deviations below the predicted value. So, for a car at 50,000 miles I would shoot to spend between 14,272.80 on the low end and 19,781.66 on the high end (average value). If we were to sell the vehicle at 150,000 miles (not accounting for inflation) we could expect an average salvage value of 10,312.57 with a net overhead cost after subtracting the salvage value from the initial average price investment of 9,469.09 over the life of the vehicle.
