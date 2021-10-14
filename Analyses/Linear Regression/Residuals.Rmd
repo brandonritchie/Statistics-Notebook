@@ -19,7 +19,7 @@ We have all been presented with two columns of quantitative data whether in Exce
 
 ## Residual
 
-A residual is the y distance of a given observation or dot from the fitted line. The definition for a given point's residual is $r_i = Y_i - \hat{Y}_i$ with $Y_i$ representing the Y position of the data and $\hat{Y}_i$ representing the Y position of the fitted line.
+A residual is the y distance of a given observation or dot from the fitted line ($\hat{Y}_i$). The definition for a given point's residual is $r_i = Y_i - \hat{Y}_i$ with $Y_i$ representing the Y position of the data and $\hat{Y}_i$ representing the Y position of the fitted line.
 
 Something to consider is that a negative residual, or a data point that is underneath the fitted line, represents an underestimation for a given data point. On the other hand, a positive residual represents an overestimation for the given data point.
 
@@ -93,9 +93,9 @@ If we take each point, find it's squared error, and sum them up we get $SSE$ or 
 
 ## SSR (Sum of Squared Regression Error)
 
-The SSR is defined by the following equation: $SSR = \sum_{i = 1}^{n}(\hat{Y}_i - \bar{Y})^2$. If we were to visualize this for a single data point the graph would look as follows:
+The SSR is defined by the following equation: $SSR = \sum_{i = 1}^{n}(\hat{Y}_i - \bar{Y})^2$. This represents the squared area between the fitted line and the mean Y value. If we were to visualize this for a single data point the graph would look as follows:
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 SSR
 ```
 
@@ -104,7 +104,7 @@ The red dot in the regression represents the predicted Y value at the point $Y_i
 ## SSTO (Total Sum of Squares)
 
 With an understanding of what SSE and SSR are and how they are calculated we can start to understand SSTO or total sum of squares. The total sum of squares is defined as $SSR + SSE = SSTO = \sum_{i = 1}^{n}(Y_i - \hat{Y}_i)^2$. We can see that is we add up all of the squared residual values and squared regression error values we are left with the total sum of squares. However, what is more interesting is that if you sum the square difference from $Y_i$ to $\bar{Y}$ of all of the squares, you get the same value as if you summed all of the squared residuals and squared regression errors. We can visualize that for one point below.
-```{r}
+```{r, message = FALSE, warning = FALSE}
 SSTO
 ```
 
@@ -118,10 +118,10 @@ $$R^2 = 1 - \frac{SSE}{SSTO} = \frac{SSR}{SSTO}$$
 If we isolate these values we can understand better what is going on. If we refresh, SSR represents the sum of the squared regression errors from the mean and SSE represents the sum of the squared residuals. If we take a single data point and translate it incrementally across the y-axis we can ask ourselves what happens to the SSE and SSR as the data moves closer to the line or away from the line assuming the fitted line stays fixed? You may realize that the squared regression error for the point does not change on a fixed line, but as the data point moves closer to the line, the squared residual value decreases. If we look at this in terms of the data as a whole, as the data points move closer to the fitted regression line the SSE value decreases. We know since $SSTO = SSE + SSR$ that as the SSE value becomes smaller the SSR value begins to comprise a larger proportion of SSTO. Because SSR can never be greater than SSTO, as SSE becomes smaller the $R^2$ value approaches 1. As the SSE value becomes larger, the regression line has less slope and the SSR decreases, and as it approaches 0 the $R^2$ value approaches 0. Thus $R^2$ is a measure of variability explained by an independent variable between the values 0-1, with 1 being all of the observed variation being explained by the independent variable and 0 being none of the observed variation being explained by the independent variable.
 
 Because of the complexity of visualizing R-squared on a graph I am going to create a visual representation of a graph with a small and large $R^2$ value. If the boxes don't look like squares it is due to the window output.
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## Re-reading in Weather Dat
 # Reading in and Wrangling Data
-dat <- read_csv("C:/Users/brand/Documents/Statistics-Notebook/Data/rexburgWeather.csv") %>% 
+dat <- read_csv("../../Data/rexburgWeather.csv") %>% 
   select(-c(Wind))
 
 # Creating a key table to shift relationship Days back 3 Days
@@ -203,7 +203,7 @@ ggarrange(plot, R2_1)
 
 This first graph is a prediction of the high temperature of weather based on a predictor variable. As we can see the SSR is 209 and the SSTO is 844 therefore we get a low $R^2$ value of 0.248.
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 p2 <- ggplot(arb_points, aes(x,y))+
   geom_point()+
   geom_smooth(method = "lm", se = FALSE, color = "firebrick")+
