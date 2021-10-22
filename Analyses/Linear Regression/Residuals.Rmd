@@ -225,13 +225,13 @@ For the data we have been modeling the SSR and SSTO are much closer to the same 
 
 ## How does R Squared differ from the p-value?
 
-As we discussed in the previous section, as your $R^2$ decreases that means that a the data is explained less by the x value. As a result the slope of the line decreases. As the slope decreases the p-value for the slope increases and becomes less significant. We should remember however that p-value is the measure of the probability of obtaining a test statistic as extreme as the one observed which differs from the definition of R squared.
+As we discussed in the previous section, as your $R^2$ decreases there is more variability around the fitted line. As a result the p-value could be higher for a lower $R^2$, however they are not directly correlated. The p-value tells us if an observed slope or intercept are significantly different than the null slope and intercept. The $R^2$ is more focused on the variability in the squared y direction of the points in relation to the line. Therefore, the $R^2$ could be very low and the p-value for the slope could be significant.
 
 ## How does R Squared relate to the residual standard error?
 
 The residual standard error is defined as:
 
-$$RSE = \sqrt{\frac{(Y_i - \hat(Y)_i)}{n - p}}$$
+$$RSE = \sqrt{\frac{\sum_{i = 1}^{n}(Y_i - \hat{Y_i})^2}{n - p}}$$
 
 This can be compared to the standard deviation. You may recognize that the numerator is the SSE. We can re-write the formula as $SSE = (n-p)(RSE)^2$.
 If we plug this into our R squared formula it looks like $$R^2 = 1 - \frac{(n-p)(RSE)^2}{(n-p)(RSE)^2 + SSR}$$

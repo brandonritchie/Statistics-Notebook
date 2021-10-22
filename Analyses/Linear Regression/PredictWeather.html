@@ -236,10 +236,7 @@ plot +
 </div>
 <div id="analysis-details" class="section level3">
 <h3>Analysis Details</h3>
-<p>The following was the output of the linear regression as well as the model:</p>
-<p><span class="math display">\[
-  \underbrace{Y_i}_\text{High Temperature} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Predictor Variable} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
-\]</span></p>
+<p>The following was the output of the linear regression:</p>
 <pre class="r"><code>pander(summary(mainLM))</code></pre>
 <table style="width:89%;">
 <colgroup>
@@ -300,16 +297,20 @@ plot +
 </tr>
 </tbody>
 </table>
-<p>The estimated regression is as follows:</p>
-<p><span class="math display">\[
-  \underbrace{\hat{Y}_i}_\text{High Temperature} = 55.85 + 1.382 \underbrace{X_i}_\text{Predictor Variable}
-\]</span></p>
 <p>The hypothesis test is as follows:</p>
 <p><span class="math display">\[
   H_0: \beta_1 = 0
 \]</span></p>
 <p><span class="math display">\[
   H_a: \beta_1 \neq 0
+\]</span></p>
+<p>The model for the true line <span class="math inline">\(Y_i\)</span> is as follows:</p>
+<p><span class="math display">\[
+  \underbrace{Y_i}_\text{High Temperature} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Predictor Variable} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
+\]</span></p>
+<p>After performing the regression, we can make a prediction of the true line <span class="math inline">\(\hat{Y}_i\)</span> is as follows:</p>
+<p><span class="math display">\[
+  \underbrace{\hat{Y}_i}_\text{Pred. High Temp} = 55.85 + 1.382 \underbrace{X_i}_\text{Predictor Variable}
 \]</span></p>
 <p>As we can see, the relationship is not significantly strong (p = 0.1428), however there does seem to be a slight positive correlation. The meaningfulness is questionable.</p>
 <p>Assuming that this is an appropriate model, as the predictor variable increases by one unit, the average high temperature will increase by 1.38 degrees Fahrenheit. Because the predictor variable is unlikely to have a value of 0 because the values weighted are unlikely to reach 0, the p-value for <span class="math inline">\(b_0\)</span> is not particularly helpful.</p>

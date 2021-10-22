@@ -178,21 +178,11 @@ In this case our predictor variable was 10.27.
 
 ### Analysis Details
 
-The following was the output of the linear regression as well as the model:
-
-$$
-  \underbrace{Y_i}_\text{High Temperature} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Predictor Variable} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
-$$
+The following was the output of the linear regression:
 
 ```{r}
 pander(summary(mainLM))
 ```
-
-The estimated regression is as follows:
-
-$$
-  \underbrace{\hat{Y}_i}_\text{High Temperature} = 55.85 + 1.382 \underbrace{X_i}_\text{Predictor Variable}
-$$
 
 The hypothesis test is as follows:
 
@@ -202,6 +192,18 @@ $$
 
 $$
   H_a: \beta_1 \neq 0
+$$
+
+The model for the true line $Y_i$ is as follows:
+
+$$
+  \underbrace{Y_i}_\text{High Temperature} = \overbrace{\beta_0}^\text{y-int} + \overbrace{\beta_1}^\text{slope} \underbrace{X_i}_\text{Predictor Variable} + \epsilon_i \quad \text{where} \ \epsilon_i \sim N(0, \sigma^2)
+$$
+
+After performing the regression, we can make a prediction of the true line $\hat{Y}_i$ is as follows:
+
+$$
+  \underbrace{\hat{Y}_i}_\text{Pred. High Temp} = 55.85 + 1.382 \underbrace{X_i}_\text{Predictor Variable}
 $$
 
 As we can see, the relationship is not significantly strong (p = 0.1428), however there does seem to be a slight positive correlation. The meaningfulness is questionable.
