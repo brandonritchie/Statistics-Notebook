@@ -1,0 +1,41 @@
+---
+title: "Midterm Decision"
+date: "10/28/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+dat <- read_csv("./Analyses/Linear Regression/Math425PastGrades.csv")
+
+dat <- dat %>% 
+  select(-c(Section)) %>% 
+  mutate(Gender = case_when(
+    Gender == "F" ~ 0,
+    Gender == "M" ~ 1
+  ),
+  AttendedAlmostAlways = case_when(
+    AttendedAlmostAlways == "Y" ~ 1,
+    AttendedAlmostAlways == "N" ~ 0
+  ),
+  SpentTimeInOfficeHours = case_when(
+    SpentTimeInOfficeHours == "N" ~ 0,
+    SpentTimeInOfficeHours == "Y" ~ 1
+  )) %>% 
+  select(-c(ClassActivitiesCompletedPerfectly, SkillsQuizzesCompletedPerfectly)) %>% 
+  mutate(across(everything(), ~))
+```
+
+```{r}
+pairs(dat)
+```
+
+
