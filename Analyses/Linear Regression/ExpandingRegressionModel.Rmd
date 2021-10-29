@@ -152,13 +152,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
   epsilon_i <- rnorm(n, 0, sigma) 
     #Gives n random values from a normal distribution with mean = 0, st. dev. = sigma.
-    
-  x2_on <- 1
-  x2_off <- 0
-  
-  Y_i <- beta0 + beta1*X2_i + beta2 * x2_on + beta3 * x2_on * X2_i + epsilon_i 
 
   fabData <- data.frame(y=Y_i, x1=X_i, x2 = X2_i) 
+  
+  Y_i <- beta0 + beta1*fabData$x1 + beta2 * fabData$x2 + beta3 * fabData$x1 * fabData$x2 + epsilon_i 
 
   fab.lm <- lm(y ~ x1 + x2 + x1:x2, data=fabData) #Fit an estimated regression model to the fabData.
 
@@ -177,5 +174,5 @@ knitr::opts_chunk$set(echo = TRUE)
   curve(beta0+beta1*x+beta2*x2+beta3*x*x2, lty=2, add = TRUE) 
     #Add the true regression line to your plot using a dashed line (lty=2). 
 
-  legend("topleft", legend=c("True Line", "Estimated Line"), lty=c(2,1), bty="n") 
+  #legend("topleft", legend=c("True Line", "Estimated Line"), lty=c(2,1), bty="n") 
 ```

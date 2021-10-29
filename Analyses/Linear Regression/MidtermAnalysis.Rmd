@@ -45,15 +45,30 @@ pairs(dat1)
 mylm1 <- lm(Final.Exam~Assessment.Quizzes.Final.Score, data = dat1)
 summary(mylm1)
 
-plot(mylm1$residuals~ ., data = dat1)
+plot(mylm1$residuals~ ., data = na.omit(dat1))
 
-mylm2 <- lm(Final.Exam~Assessment.Quizzes.Final.Score + MagicTwoGroups + Assessment.Quizzes.Final.Score:MagicTwoGroups, data = dat)
+mylm2 <- lm(Final.Exam~Assessment.Quizzes.Final.Score + MagicTwoGroups + Assessment.Quizzes.Final.Score:MagicTwoGroups, data = dat1)
 summary(mylm2)
 
-dat %>% 
+dat1 %>% 
   ggplot(aes(Assessment.Quizzes.Final.Score, Final.Exam, color = as.factor(MagicTwoGroups)))+
   geom_point()
 
-?plot
+plot(mylm2$residuals~ ., data = na.omit(dat1))
+```
+
+```{r}
+mylm3 <- lm(Final.Exam~Math.425.Midterm +  MagicTwoGroups, data = dat1)
+summary(mylm3)
+
+dat1 %>% 
+  ggplot(aes(Math.425.Midterm, Final.Exam, color = as.factor(MagicTwoGroups)))+
+  geom_point()
+
+plot(mylm3$residuals~ ., data = na.omit(dat1))
+```
+
+```{r}
+dat1 %>% arrange(desc(Math.425.Midterm))
 ```
 
