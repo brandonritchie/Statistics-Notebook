@@ -14,9 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 
-dat <- read_csv("./Analyses/Linear Regression/Math425PastGrades.csv")
-
-dat <- dat %>% 
+dat1 <- read_csv("./Math425PastGrades.csv") %>% 
   select(-c(Section)) %>% 
   mutate(Gender = case_when(
     Gender == "F" ~ 0,
@@ -29,13 +27,33 @@ dat <- dat %>%
   SpentTimeInOfficeHours = case_when(
     SpentTimeInOfficeHours == "N" ~ 0,
     SpentTimeInOfficeHours == "Y" ~ 1
+  ),
+  MagicTwoGroups = case_when(
+    MagicTwoGroups == 1 ~ 0,
+    MagicTwoGroups == 2 ~ 1
   )) %>% 
-  select(-c(ClassActivitiesCompletedPerfectly, SkillsQuizzesCompletedPerfectly)) %>% 
-  mutate(across(everything(), ~))
+    mutate_all(funs(as.integer(str_replace(., "EX", "0")))) %>%  
+    select(-c(ClassActivitiesCompletedPerfectly, SkillsQuizzesCompletedPerfectly))
 ```
 
 ```{r}
-pairs(dat)
+pairs(dat1)
 ```
 
+
+```{r}
+mylm1 <- lm(Final.Exam~Assessment.Quizzes.Final.Score, data = dat1)
+summary(mylm1)
+
+plot(mylm1$residuals~ ., data = dat1)
+
+mylm2 <- lm(Final.Exam~Assessment.Quizzes.Final.Score + MagicTwoGroups + Assessment.Quizzes.Final.Score:MagicTwoGroups, data = dat)
+summary(mylm2)
+
+dat %>% 
+  ggplot(aes(Assessment.Quizzes.Final.Score, Final.Exam, color = as.factor(MagicTwoGroups)))+
+  geom_point()
+
+?plot
+```
 
