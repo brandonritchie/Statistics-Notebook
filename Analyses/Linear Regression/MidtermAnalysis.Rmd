@@ -1,0 +1,59 @@
+---
+title: "Midterm Decision"
+date: "10/28/2021"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+dat1 <- read_csv("./Math425PastGrades.csv") %>% 
+  select(-c(Section)) %>% 
+  mutate(Gender = case_when(
+    Gender == "F" ~ 0,
+    Gender == "M" ~ 1
+  ),
+  AttendedAlmostAlways = case_when(
+    AttendedAlmostAlways == "Y" ~ 1,
+    AttendedAlmostAlways == "N" ~ 0
+  ),
+  SpentTimeInOfficeHours = case_when(
+    SpentTimeInOfficeHours == "N" ~ 0,
+    SpentTimeInOfficeHours == "Y" ~ 1
+  ),
+  MagicTwoGroups = case_when(
+    MagicTwoGroups == 1 ~ 0,
+    MagicTwoGroups == 2 ~ 1
+  )) %>% 
+    mutate_all(funs(as.integer(str_replace(., "EX", "0")))) %>%  
+    select(-c(ClassActivitiesCompletedPerfectly, SkillsQuizzesCompletedPerfectly))
+```
+
+```{r}
+pairs(dat1)
+```
+
+
+```{r}
+mylm1 <- lm(Final.Exam~Assessment.Quizzes.Final.Score, data = dat1)
+summary(mylm1)
+
+plot(mylm1$residuals~ ., data = dat1)
+
+mylm2 <- lm(Final.Exam~Assessment.Quizzes.Final.Score + MagicTwoGroups + Assessment.Quizzes.Final.Score:MagicTwoGroups, data = dat)
+summary(mylm2)
+
+dat %>% 
+  ggplot(aes(Assessment.Quizzes.Final.Score, Final.Exam, color = as.factor(MagicTwoGroups)))+
+  geom_point()
+
+?plot
+```
+
