@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 
 dat1 <- read_csv("./Math425PastGrades.csv") %>% 
@@ -36,39 +36,74 @@ dat1 <- read_csv("./Math425PastGrades.csv") %>%
     select(-c(ClassActivitiesCompletedPerfectly, SkillsQuizzesCompletedPerfectly))
 ```
 
-```{r}
-pairs(dat1)
+```{r, warning = FALSE, message = FALSE}
+#pairs(dat1)
 ```
 
 
 ```{r}
 mylm1 <- lm(Final.Exam~Assessment.Quizzes.Final.Score, data = dat1)
-summary(mylm1)
 
-plot(mylm1$residuals~ ., data = na.omit(dat1))
+#plot(mylm1$residuals~ ., data = na.omit(dat1))
 
 mylm2 <- lm(Final.Exam~Assessment.Quizzes.Final.Score + MagicTwoGroups + Assessment.Quizzes.Final.Score:MagicTwoGroups, data = dat1)
-summary(mylm2)
 
-dat1 %>% 
-  ggplot(aes(Assessment.Quizzes.Final.Score, Final.Exam, color = as.factor(MagicTwoGroups)))+
-  geom_point()
+# dat1 %>% 
+#   ggplot(aes(Assessment.Quizzes.Final.Score, Final.Exam, color = as.factor(MagicTwoGroups)))+
+#   geom_point()
 
-plot(mylm2$residuals~ ., data = na.omit(dat1))
+#(mylm2$residuals~ ., data = na.omit(dat1))
 ```
 
 ```{r}
-mylm3 <- lm(Final.Exam~Math.425.Midterm +  MagicTwoGroups, data = dat1)
-summary(mylm3)
+mylm3 <- lm(Final.Exam~ I(Math.425.Midterm^2) + MagicTwoGroups, data = dat1)
 
-dat1 %>% 
+b <- coef(mylm3)
+
+p <- dat1 %>% 
   ggplot(aes(Math.425.Midterm, Final.Exam, color = as.factor(MagicTwoGroups)))+
-  geom_point()
-
-plot(mylm3$residuals~ ., data = na.omit(dat1))
+  geom_point(size = 3)+
+  scale_color_manual(values = c("firebrick", "skyblue"))+
+  stat_function(fun = function(x) b[1] + b[2] * x^2, size = 1, color = "firebrick")+
+  stat_function(fun = function(x) (b[1] + b[3]) + b[2] * x^2, size = 1, color = "skyblue")+
+  theme_minimal()+
+  guides(color = guide_legend("Magic Group"))
 ```
 
+I predict that I will make an **88%** on the final with a 95% prediction interval of **72% - 100%**.
+
+```{r, warning = FALSE, message = FALSE}
+pred <- predict(mylm3, data.frame(Math.425.Midterm = 92, MagicTwoGroups = 1), interval = "prediction")
+
+p+
+  geom_segment(aes(x = 92, xend = 92, y = pred[2], yend = 100), size = 4, color = "skyblue", alpha = 0.01)
+```
+
+## Analysis
+
+I first began by making a pairs plotof the data to look for trends and correlations. Below is the output with the features trimmed to some that appeared to have some correlation.
+
+```{r, warning = FALSE, message = FALSE}
+pairs(dat1 %>% 
+  select(Final.Exam, Math.425.Midterm, Assessment.Quizzes.Final.Score, MagicTwoGroups, AttendedAlmostAlways))
+```
+
+As we can see there appears to be a trend with the midterm and the final grade on assessment quizzes to the final exam. These are both quantitative so we are going to see which one has the best initial adjusted $R^2$ and select it over the other so that we don't have to deal with higher dimensional spaces for now.
+
 ```{r}
-dat1 %>% arrange(desc(Math.425.Midterm))
+mylm <- lm(Final.Exam ~ Math.425.Midterm, data = dat1)
+summary(mylm)
+```
+
+
+```{r}
+summary(mylm1)
+```
+
+
+```{r, warning = FALSE, message = FALSE}
+par(mfrow=c(1,3))
+plot(mylm3, which=1:2)
+plot(mylm3$residuals)
 ```
 
