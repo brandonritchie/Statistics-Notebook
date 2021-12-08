@@ -1,0 +1,75 @@
+---
+title: "Saunders Prediction Battleship - Ritchie"
+output: 
+  html_document:
+    theme: cerulean
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+dat <- read_csv("saunders_Fall21_rbdata.csv")
+```
+
+```{r}
+pairs(dat)
+
+mylm <- lm(y ~x10 + x5 + x9 + x9:I(x10^2) +x4:x10 + x4:I(x10^2) + x4:I(x10^3) + x5:x10, data = dat)
+summary(mylm)
+plot(mylm$residuals~.,data = dat)
+```
+
+$ b_0 + b_1x_{10} + b_2x_5 + b_3x_9 + b_4x_9x_{10} + b_5x_{10}x_4 + b_6x4x_{10}^2 + b_7x4x_{10}^3 + b_8x_{10}x_5 + b_9x_{10}x_5x_6$
+
+```{r}
+col_inter <- interaction(as.factor(dat$x4), as.factor(dat$x9), as.factor(dat$x5))
+
+plot(y~x10, pch = 16, data = dat, col = col_inter)
+
+b <- coef(mylm)
+b
+
+x4 <- 0
+x5 <- 0
+x9 <- 0
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+x4 <- 0
+x5 <- 1
+x9 <- 0
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+x4 <- 0
+x5 <- 1
+x9 <- 1
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+
+x4 <- 0
+x5 <- 1
+x9 <- 2
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+x4 <- 0
+x5 <- 1
+x9 <- 3
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+x4 <- 1
+x5 <- 0
+x9 <- 0
+
+curve(b[1] + b[2]*x + b[3]*x5 + b[4]*x9 + b[5]*x^2*x9 + b[6]*x*x4 + b[7]*x^2*x4 + b[8] * x^3*x4 + b[9]* x5*x, add = TRUE)
+
+```
+

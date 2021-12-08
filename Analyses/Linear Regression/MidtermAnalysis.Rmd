@@ -70,7 +70,7 @@ p <- dat1 %>%
   guides(color = guide_legend("Magic Group"))
 ```
 
-I predict that I will make an **88%** on the final with a 95% prediction interval of **72% - 100%**.
+Because I made a 92% on my midterm and I will assume I am in Magic Group 1, I predict that I will make an **88%** on the final with a 95% prediction interval of **72% - 100%**. I'm pretty sure that I can score better on the final than my midterm, but I will keep my midterm score.
 
 ```{r, warning = FALSE, message = FALSE}
 pred <- predict(mylm3, data.frame(Math.425.Midterm = 92, MagicTwoGroups = 1), interval = "prediction")
@@ -90,16 +90,67 @@ pairs(dat1 %>%
 
 As we can see there appears to be a trend with the midterm and the final grade on assessment quizzes to the final exam. These are both quantitative so we are going to see which one has the best initial adjusted $R^2$ and select it over the other so that we don't have to deal with higher dimensional spaces for now.
 
-```{r}
+Our relationship with the midterm exam gives us an adjusted R squared of 0.2969.
+
+```{r, warning = FALSE, message = FALSE}
 mylm <- lm(Final.Exam ~ Math.425.Midterm, data = dat1)
 summary(mylm)
 ```
 
+And for the relationship with Assessment Quiz final score we can see our adjusted R squared is marginally worse with 0.2612. So we will select the previous.
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 summary(mylm1)
 ```
 
+As we could see from the summary output, our slope was significant, however only about 30% of the variance of the final exam could is described by the midterm grade. 
+
+```{r, warning = FALSE, message = FALSE}
+dat1 %>% 
+  ggplot(aes(Math.425.Midterm, Final.Exam))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE, color = "firebrick")+
+  theme_minimal()
+```
+
+If we look back at the pairs plot we can see that we have a variable called "MagicTwoGroups" that is a binary representation of two groups that Brother Saunders assigns. When compared to the Final exam we can see that there is a separation in distribution of exam scores among the two groups. Now we should ask ourselves, is this a biased metric and did Brother Saunders apply this score by cutting the regression in half and assign those above the line a 1 and those below a 0? We may need to investigate some more (just kidding Brother Saunders). When we color our points by this variable and add the variable to our linear model, we get the following plot and summary:
+
+```{r, warning = FALSE, message = FALSE}
+dat1 %>% 
+  ggplot(aes(Math.425.Midterm, Final.Exam, color = as.factor(MagicTwoGroups)))+
+  geom_point()+
+  scale_color_manual(values = c("firebrick", "skyblue"))+
+  geom_smooth(method = "lm", se = FALSE, formula = y~x)+
+  theme_minimal()
+
+mylm4 <- lm(Final.Exam~ Math.425.Midterm + MagicTwoGroups + Math.425.Midterm:MagicTwoGroups, data = dat1)
+summary(mylm4)
+```
+
+As we can see, our adjusted R squared jumped significantly now to 0.792. However, now we can see that we have some insignificant terms in our model namely the interaction term (change in slope). Lets remove this term and re-evaluate.
+
+```{r, warning = FALSE, message = FALSE}
+mylm5 <- lm(Final.Exam~ Math.425.Midterm + MagicTwoGroups , data = dat1)
+summary(mylm5)
+```
+
+That marginally increased our R squared by 0.003, but there appears to be a more significant change we can make in terms of the linearity. If we look at our residuals vs fitted plot, it may not look significant, but we can see a slight pattern with the data bending slightly in a slight quadratic shape. So, lets try and perform a quadratic two lines model instead of a linear two lines.
+
+```{r, warning = FALSE, message = FALSE}
+plot(mylm5, which=1)
+```
+
+When we add a quadratic term our slope term becomes insignificant. So, we take that out and we are left with the following model and an adjusted R squared of 0.81:
+
+```{r, warning = FALSE, message = FALSE}
+summary(mylm3)
+
+p
+```
+
+## Model Validity
+
+Our assumptions are satisfied fairly well. We can assume that our regression is linear because we have a fairly uniform distribution along the residuals vs fitted plot. We can see that there are a few outliers with points 48 and 55, but overall it is pretty good. In the Q-Q plot we can see that our regression is normally distributed. Also the residuals are independent of the order of the data.
 
 ```{r, warning = FALSE, message = FALSE}
 par(mfrow=c(1,3))
